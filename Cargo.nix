@@ -221,13 +221,13 @@ rec {
       };
       "lava-core" = rec {
         crateName = "lava-core";
-        version = "0.1.1";
+        version = "0.1.2";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/pleme-io/lava-core";
-          rev = "7c79a608e10c25fcb88a37b5b7e55bc8b5c025be";
-          sha256 = "1s3bxw2ymbz8ansi7xxqc1bxvq3g4sd97hjr86pjaignib2zyzgw";
+          rev = "9d3dacaf51c7bae86efb0c925842286a793039cf";
+          sha256 = "1ngyybf7mwbj7m9v2q2ip6y3vbl1rji6dsfahqhbsb6jliifp3yj";
         };
         libName = "lava_core";
         authors = [
@@ -257,13 +257,13 @@ rec {
       };
       "lava-eval" = rec {
         crateName = "lava-eval";
-        version = "0.1.1";
+        version = "0.1.3";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/pleme-io/lava-eval";
-          rev = "bf8948a65fa149cd67282f7d2d7fc03a08edfb2a";
-          sha256 = "028f16spf986gd62fi6sq073lfiv1m5ixzx29ihpd3cmi8c3zjxy";
+          rev = "aed07612cee0f9317b3054c4acf2b07a36f54b44";
+          sha256 = "1xn24f6s1i20sa9z6h0ky9jhhwk8kkbifv4bxaaw5zpxvmdbqbww";
         };
         libName = "lava_eval";
         authors = [
@@ -284,6 +284,10 @@ rec {
             packageId = "lava-core";
           }
           {
+            name = "lava-schema";
+            packageId = "lava-schema";
+          }
+          {
             name = "serde";
             packageId = "serde";
             features = [ "derive" ];
@@ -301,7 +305,7 @@ rec {
       };
       "lava-runtime" = rec {
         crateName = "lava-runtime";
-        version = "0.1.1";
+        version = "0.1.2";
         edition = "2024";
         src = lib.cleanSourceWith { filter = sourceFilter;  src = ./.; };
         libName = "lava_runtime";
@@ -323,6 +327,10 @@ rec {
             packageId = "lava-eval";
           }
           {
+            name = "lava-schema";
+            packageId = "lava-schema";
+          }
+          {
             name = "serde";
             packageId = "serde";
             features = [ "derive" ];
@@ -330,6 +338,75 @@ rec {
           {
             name = "serde_json";
             packageId = "serde_json";
+          }
+          {
+            name = "thiserror";
+            packageId = "thiserror";
+          }
+        ];
+        devDependencies = [
+          {
+            name = "lava-types";
+            packageId = "lava-types";
+          }
+        ];
+
+      };
+      "lava-schema" = rec {
+        crateName = "lava-schema";
+        version = "0.1.1";
+        edition = "2024";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/pleme-io/lava-schema";
+          rev = "9366c7db071ac8476f3c75085281b6a6bec0168d";
+          sha256 = "058nhljgmal3hkpadd0x77xlrxix5dzhqb717gfwqydyim0yqhs1";
+        };
+        libName = "lava_schema";
+        authors = [
+          "pleme-io"
+        ];
+        dependencies = [
+          {
+            name = "indexmap";
+            packageId = "indexmap";
+            features = [ "serde" ];
+          }
+          {
+            name = "lava-types";
+            packageId = "lava-types";
+          }
+          {
+            name = "serde";
+            packageId = "serde";
+            features = [ "derive" ];
+          }
+          {
+            name = "thiserror";
+            packageId = "thiserror";
+          }
+        ];
+
+      };
+      "lava-types" = rec {
+        crateName = "lava-types";
+        version = "0.1.1";
+        edition = "2024";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/pleme-io/lava-types";
+          rev = "961bf4c24eec994c4cd7557a5fc6a3522928c455";
+          sha256 = "0y8piapjjj1rxy6rg2r84325k2w10h0fxx4ssqyk6756r3wf0l0n";
+        };
+        libName = "lava_types";
+        authors = [
+          "pleme-io"
+        ];
+        dependencies = [
+          {
+            name = "serde";
+            packageId = "serde";
+            features = [ "derive" ];
           }
           {
             name = "thiserror";
