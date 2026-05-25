@@ -32,6 +32,7 @@
 
 use indexmap::IndexMap;
 use lava_core::Architecture;
+pub use lava_schema::{Interface, SchemaError};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -106,6 +107,56 @@ pub trait EmbeddedRuntime {
 
     /// Evaluate the input + produce a typed `EvaluationResult`.
     fn evaluate(&self, input: &ArtifactInput) -> Result<EvaluationResult, RuntimeError>;
+
+    /// Schema-gated evaluate — validates `input.bindings` against the
+    /// supplied [`Interface`] *before* the runtime evaluates the body.
+    ///
+    /// Default impl falls back to plain [`Self::evaluate`] — runtimes
+    /// that natively support typed-interface validation (e.g.
+    /// [`LavaRuntime`] via `lava_eval::eval_architecture_with_schema`)
+    /// override this to route through their native gate.
+    ///
+    /// # Errors
+    /// Returns [`RuntimeError::Schema`] when the bag violates the
+    /// interface; otherwise surfaces upstream errors from
+    /// [`Self::evaluate`].
+    fn evaluate_with_schema(
+        &self,
+        input: &ArtifactInput,
+        iface: &Interface,
+    ) -> Result<EvaluationResult, RuntimeError> {
+        let bag = bag_from_bindings(&input.bindings);
+        if let Err(errors) = iface.validate_inputs(&bag) {
+            let first = errors
+                .first()
+                .map_or_else(|| "unknown".to_string(), std::string::ToString::to_string);
+            return Err(RuntimeError::Schema {
+                interface: iface.name.clone(),
+                count: errors.len(),
+                first,
+            });
+        }
+        self.evaluate(input)
+    }
+}
+
+/// Project ArtifactInput bindings into the IndexMap<String,String>
+/// shape lava-schema accepts. Lists are joined with commas — typed
+/// list-of validation lives in lava-types' `ListOf` and isn't applied
+/// here (the scalar/list distinction is the ArtifactBinding concern;
+/// the bag shape is the schema concern).
+pub(crate) fn bag_from_bindings(
+    bindings: &IndexMap<String, ArtifactBinding>,
+) -> IndexMap<String, String> {
+    let mut bag: IndexMap<String, String> = IndexMap::new();
+    for (k, v) in bindings {
+        let value = match v {
+            ArtifactBinding::Scalar(s) => s.clone(),
+            ArtifactBinding::List(items) => items.join(","),
+        };
+        bag.insert(k.clone(), value);
+    }
+    bag
 }
 
 #[derive(Debug, Error)]
@@ -118,6 +169,12 @@ pub enum RuntimeError {
     Io(#[from] std::io::Error),
     #[error("upstream: {0}")]
     Upstream(String),
+    #[error("interface `{interface}` rejected {count} field(s): {first}")]
+    Schema {
+        interface: String,
+        count: usize,
+        first: String,
+    },
 }
 
 /// Auto-detect the right runtime from a file extension. Returns the
@@ -207,5 +264,90 @@ mod tests {
     fn auto_detect_returns_none_for_unknown_extension() {
         let p = std::path::Path::new("/tmp/main.yaml");
         assert!(pick_runtime_for_path(p).is_none());
+    }
+
+    #[test]
+    fn evaluate_with_schema_accepts_valid_bindings() {
+        use lava_schema::Field;
+        use lava_types::Type;
+
+        let mut iface = Interface::new("aws-vpc-tiny");
+        iface
+            .inputs
+            .insert("cidr".to_string(), Field::strict(Type::CidrBlock));
+
+        let rt = LavaRuntime::new();
+        let mut bindings = IndexMap::new();
+        bindings.insert(
+            "cidr".to_string(),
+            ArtifactBinding::Scalar("172.16.0.0/12".to_string()),
+        );
+        let input = ArtifactInput {
+            source: vpc_tlisp().to_string(),
+            bindings,
+            name: None,
+        };
+        let result = rt.evaluate_with_schema(&input, &iface).unwrap();
+        let json = result.architecture.render_terraform_json().unwrap();
+        assert_eq!(
+            json["resource"]["aws_vpc"]["main"]["cidr_block"],
+            "172.16.0.0/12"
+        );
+    }
+
+    #[test]
+    fn evaluate_with_schema_rejects_bad_input_via_typed_schema_error() {
+        use lava_schema::Field;
+        use lava_types::Type;
+
+        let mut iface = Interface::new("aws-vpc-tiny");
+        iface
+            .inputs
+            .insert("cidr".to_string(), Field::strict(Type::CidrBlock));
+
+        let rt = LavaRuntime::new();
+        let mut bindings = IndexMap::new();
+        bindings.insert(
+            "cidr".to_string(),
+            ArtifactBinding::Scalar("absolutely-not-a-cidr".to_string()),
+        );
+        let input = ArtifactInput {
+            source: vpc_tlisp().to_string(),
+            bindings,
+            name: None,
+        };
+        let err = rt.evaluate_with_schema(&input, &iface).unwrap_err();
+        match err {
+            RuntimeError::Schema {
+                interface, count, ..
+            } => {
+                assert_eq!(interface, "aws-vpc-tiny");
+                assert_eq!(count, 1);
+            }
+            other => panic!("expected RuntimeError::Schema, got {other:?}"),
+        }
+    }
+
+    /// Default-impl path — TerraformJsonRuntime inherits the gate
+    /// without overriding. Bad input still surfaces RuntimeError::Schema.
+    #[test]
+    fn terraform_runtime_inherits_default_schema_gate() {
+        use lava_schema::Field;
+        use lava_types::Type;
+
+        let mut iface = Interface::new("any");
+        iface
+            .inputs
+            .insert("zone".to_string(), Field::strict(Type::String));
+        // (Note: zone is required; empty bag should fail before we
+        // even try to parse the source.)
+        let rt = TerraformJsonRuntime::new();
+        let input = ArtifactInput {
+            source: "{}".to_string(),
+            bindings: IndexMap::new(),
+            name: None,
+        };
+        let err = rt.evaluate_with_schema(&input, &iface).unwrap_err();
+        assert!(matches!(err, RuntimeError::Schema { .. }));
     }
 }

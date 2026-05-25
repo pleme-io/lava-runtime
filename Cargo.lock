@@ -57,12 +57,13 @@ dependencies = [
 
 [[package]]
 name = "lava-eval"
-version = "0.1.1"
-source = "git+https://github.com/pleme-io/lava-eval?branch=main#bf8948a65fa149cd67282f7d2d7fc03a08edfb2a"
+version = "0.1.3"
+source = "git+https://github.com/pleme-io/lava-eval?branch=main#aed07612cee0f9317b3054c4acf2b07a36f54b44"
 dependencies = [
  "indexmap",
  "lava-arch",
  "lava-core",
+ "lava-schema",
  "serde",
  "serde_json",
  "thiserror",
@@ -75,8 +76,30 @@ dependencies = [
  "indexmap",
  "lava-core",
  "lava-eval",
+ "lava-schema",
+ "lava-types",
  "serde",
  "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "lava-schema"
+version = "0.1.1"
+source = "git+https://github.com/pleme-io/lava-schema?branch=main#9366c7db071ac8476f3c75085281b6a6bec0168d"
+dependencies = [
+ "indexmap",
+ "lava-types",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "lava-types"
+version = "0.1.1"
+source = "git+https://github.com/pleme-io/lava-types?branch=main#961bf4c24eec994c4cd7557a5fc6a3522928c455"
+dependencies = [
+ "serde",
  "thiserror",
 ]
 
