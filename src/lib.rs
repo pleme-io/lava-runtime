@@ -108,6 +108,57 @@ pub trait EmbeddedRuntime {
     /// Evaluate the input + produce a typed `EvaluationResult`.
     fn evaluate(&self, input: &ArtifactInput) -> Result<EvaluationResult, RuntimeError>;
 
+    /// Convenience: load a file and call [`Self::evaluate`].
+    /// Wraps the common "read source, package into [`ArtifactInput`],
+    /// evaluate" pattern every CLI surface used to duplicate.
+    ///
+    /// # Errors
+    /// Surfaces I/O errors via [`RuntimeError::Io`] and evaluation
+    /// errors via [`RuntimeError::Evaluate`].
+    fn evaluate_path(
+        &self,
+        path: &std::path::Path,
+        bindings: IndexMap<String, ArtifactBinding>,
+    ) -> Result<EvaluationResult, RuntimeError> {
+        let source = std::fs::read_to_string(path)?;
+        let name = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(std::string::ToString::to_string);
+        self.evaluate(&ArtifactInput {
+            source,
+            bindings,
+            name,
+        })
+    }
+
+    /// Convenience: load a file and call [`Self::evaluate_with_schema`].
+    ///
+    /// # Errors
+    /// Surfaces I/O errors via [`RuntimeError::Io`], schema rejections
+    /// via [`RuntimeError::Schema`], and evaluation failures via
+    /// [`RuntimeError::Evaluate`].
+    fn evaluate_path_with_schema(
+        &self,
+        path: &std::path::Path,
+        bindings: IndexMap<String, ArtifactBinding>,
+        iface: &Interface,
+    ) -> Result<EvaluationResult, RuntimeError> {
+        let source = std::fs::read_to_string(path)?;
+        let name = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(std::string::ToString::to_string);
+        self.evaluate_with_schema(
+            &ArtifactInput {
+                source,
+                bindings,
+                name,
+            },
+            iface,
+        )
+    }
+
     /// Schema-gated evaluate — validates `input.bindings` against the
     /// supplied [`Interface`] *before* the runtime evaluates the body.
     ///
@@ -326,6 +377,71 @@ mod tests {
             }
             other => panic!("expected RuntimeError::Schema, got {other:?}"),
         }
+    }
+
+    /// `evaluate_path` reads + evaluates a real .tlisp file end-to-end
+    /// without the caller building an [`ArtifactInput`].
+    #[test]
+    fn evaluate_path_loads_source_and_evaluates() {
+        let dir = std::env::temp_dir().join(format!(
+            "lava-runtime-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("vpc.tlisp");
+        std::fs::write(&path, vpc_tlisp()).unwrap();
+
+        let rt = LavaRuntime::new();
+        let result = rt.evaluate_path(&path, IndexMap::new()).unwrap();
+        let json = result.architecture.render_terraform_json().unwrap();
+        assert_eq!(
+            json["resource"]["aws_vpc"]["main"]["cidr_block"],
+            "10.0.0.0/16"
+        );
+    }
+
+    /// `evaluate_path_with_schema` runs the same flow but routes
+    /// through the typed-interface gate.
+    #[test]
+    fn evaluate_path_with_schema_gates_via_interface() {
+        use lava_schema::Field;
+        use lava_types::Type;
+
+        let dir = std::env::temp_dir().join(format!(
+            "lava-runtime-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("vpc.tlisp");
+        std::fs::write(&path, vpc_tlisp()).unwrap();
+
+        let mut iface = Interface::new("aws-vpc-tiny");
+        iface
+            .inputs
+            .insert("cidr".to_string(), Field::strict(Type::CidrBlock));
+
+        let rt = LavaRuntime::new();
+        let mut bindings = IndexMap::new();
+        bindings.insert(
+            "cidr".to_string(),
+            ArtifactBinding::Scalar("10.55.0.0/16".to_string()),
+        );
+        let result = rt
+            .evaluate_path_with_schema(&path, bindings, &iface)
+            .unwrap();
+        let json = result.architecture.render_terraform_json().unwrap();
+        assert_eq!(
+            json["resource"]["aws_vpc"]["main"]["cidr_block"],
+            "10.55.0.0/16"
+        );
     }
 
     /// Default-impl path — TerraformJsonRuntime inherits the gate
