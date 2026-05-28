@@ -73,7 +73,7 @@ dependencies = [
 
 [[package]]
 name = "lava-runtime"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "indexmap",
  "lava-core",
@@ -88,7 +88,7 @@ dependencies = [
 [[package]]
 name = "lava-schema"
 version = "0.1.3"
-source = "git+https://github.com/pleme-io/lava-schema?branch=main#65f6923d1fee98985eabfdfab320248a4a44a80f"
+source = "git+https://github.com/pleme-io/lava-schema?branch=main#2abf9fd5fe50a976afa385c18fbdf5f5579a5f21"
 dependencies = [
  "indexmap",
  "lava-types",
