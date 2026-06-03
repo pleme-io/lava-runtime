@@ -6,7 +6,7 @@ license = "MIT"
 name = "lava-runtime"
 readme = "README.md"
 repository = "https://github.com/pleme-io/lava-runtime"
-version = "0.1.5"
+version = "0.1.6"
 
 [lib]
 name = "lava_runtime"
