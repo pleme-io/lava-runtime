@@ -47,7 +47,12 @@ impl EmbeddedRuntime for TerraformJsonRuntime {
                     let mut attrs = IndexMap::new();
                     if let Some(body_obj) = body.as_object() {
                         for (k, v) in body_obj {
-                            attrs.insert(k.clone(), Value::Json(v.clone()));
+                            // from_json lifts nested structure into the typed
+                            // tree and recovers `${type.name.attr}` strings as
+                            // typed references — so an imported terraform.json
+                            // arrives with its dependency graph intact rather
+                            // than as opaque interpolation strings.
+                            attrs.insert(k.clone(), Value::from_json(v.clone()));
                         }
                     }
                     arch.resources.push(Resource {
@@ -66,7 +71,7 @@ impl EmbeddedRuntime for TerraformJsonRuntime {
         if let Some(output_section) = value.get("output").and_then(|v| v.as_object()) {
             for (k, body) in output_section {
                 if let Some(v) = body.get("value") {
-                    arch.outputs.insert(k.clone(), Value::Json(v.clone()));
+                    arch.outputs.insert(k.clone(), Value::from_json(v.clone()));
                 }
             }
         }
