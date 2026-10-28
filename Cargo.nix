@@ -181,9 +181,9 @@ rec {
       };
       "lava-arch" = rec {
         crateName = "lava-arch";
-        version = "0.2.1";
+        version = "0.2.5";
         edition = "2024";
-        sha256 = "1540k0688m0h4a76xycvf2ylwkzfsz0qigwqnpr6d1x7nzwpzvil";
+        sha256 = "0ai50jr2bi0ryhv8al9mkcsf8dnbgxwl26p66j3smv96fjgy9k9n";
         libName = "lava_arch";
         authors = [
           "pleme-io"
@@ -216,9 +216,9 @@ rec {
       };
       "lava-core" = rec {
         crateName = "lava-core";
-        version = "0.2.2";
+        version = "0.2.5";
         edition = "2024";
-        sha256 = "1yhw3575dvkh66mjg22pz1lb4gv9qkpswxqz56v4lykwhccvrr53";
+        sha256 = "0lk789jyl8d44baljq5ml5hp4yvwb57mbgfbp83i3jyljj096rlx";
         libName = "lava_core";
         authors = [
           "pleme-io"
@@ -240,8 +240,8 @@ rec {
             features = [ "preserve_order" ];
           }
           {
-            name = "serde_yaml";
-            packageId = "serde_yaml";
+            name = "serde_norway";
+            packageId = "serde_norway";
           }
           {
             name = "thiserror";
@@ -252,9 +252,9 @@ rec {
       };
       "lava-eval" = rec {
         crateName = "lava-eval";
-        version = "0.2.1";
+        version = "0.2.10";
         edition = "2024";
-        sha256 = "1kqgg7jm6ma34pvjdjiqna3961b845i8mf1a627vc7m1q91ygsyr";
+        sha256 = "1fjpf7fj7mzrcvdbcjz196k51qls4njhj4wl0vf79z9m8wc355zy";
         libName = "lava_eval";
         authors = [
           "pleme-io"
@@ -299,7 +299,7 @@ rec {
       };
       "lava-runtime" = rec {
         crateName = "lava-runtime";
-        version = "0.2.1";
+        version = "0.2.2";
         edition = "2024";
         src = lib.cleanSourceWith { filter = sourceFilter;  src = ./.; };
         libName = "lava_runtime";
@@ -622,12 +622,13 @@ rec {
         };
         resolvedDefaultFeatures = [ "default" "indexmap" "preserve_order" "std" ];
       };
-      "serde_yaml" = rec {
-        crateName = "serde_yaml";
-        version = "0.9.34+deprecated";
+      "serde_norway" = rec {
+        crateName = "serde_norway";
+        version = "0.9.42";
         edition = "2021";
-        sha256 = "0isba1fjyg3l6rxk156k600ilzr8fp7crv82rhal0rxz5qd1m2va";
+        sha256 = "130nx1r3nwydglq1yrrcydavd6w5zj219zsimc7m1zdmi6ag4274";
         authors = [
+          "Christina Sørensen <christina@cafkafk.com>"
           "David Tolnay <dtolnay@gmail.com>"
         ];
         dependencies = [
@@ -648,8 +649,8 @@ rec {
             packageId = "serde";
           }
           {
-            name = "unsafe-libyaml";
-            packageId = "unsafe-libyaml";
+            name = "unsafe-libyaml-norway";
+            packageId = "unsafe-libyaml-norway";
           }
         ];
 
@@ -689,9 +690,9 @@ rec {
       };
       "thiserror" = rec {
         crateName = "thiserror";
-        version = "2.0.19";
+        version = "2.0.20";
         edition = "2021";
-        sha256 = "1ngwxsjsa64v1n7vb90h2b0i3fqk1piwaf0z6fqdacqfhjc3b909";
+        sha256 = "0kxs6p295jffxhzaxpxv1dwaaf5iqlm6sx8h0djp6ancbxgj71pc";
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
         ];
@@ -708,9 +709,9 @@ rec {
       };
       "thiserror-impl" = rec {
         crateName = "thiserror-impl";
-        version = "2.0.19";
+        version = "2.0.20";
         edition = "2021";
-        sha256 = "1ka10pqy1g8zy5al9m8yadg30jp8hx0q80j8awmd8131yw6gxjs3";
+        sha256 = "1bwjc94gi0xn5jz26h1a8bjj1wdkvvr6jifamyc4mp9n28zcs15w";
         procMacro = true;
         libName = "thiserror_impl";
         authors = [
@@ -743,14 +744,15 @@ rec {
         ];
 
       };
-      "unsafe-libyaml" = rec {
-        crateName = "unsafe-libyaml";
-        version = "0.2.11";
+      "unsafe-libyaml-norway" = rec {
+        crateName = "unsafe-libyaml-norway";
+        version = "0.2.15";
         edition = "2021";
         crateBin = [];
-        sha256 = "0qdq69ffl3v5pzx9kzxbghzn0fzn266i1xn70y88maybz9csqfk7";
-        libName = "unsafe_libyaml";
+        sha256 = "0111lbq845fwqv8cn89m02v7bjd2lq2jvd814dziqlijpxcvv6mk";
+        libName = "unsafe_libyaml_norway";
         authors = [
+          "Christina Sørensen <christina@cafkafk.com>"
           "David Tolnay <dtolnay@gmail.com>"
         ];
 
